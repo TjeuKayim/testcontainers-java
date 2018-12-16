@@ -4,29 +4,24 @@
 
 
 To be able to run your test container into the pipeline you need to run the job as a docker container (see [Running inside Docker](../usage/inside_docker.md)),
-so you need Docker-In-Docker (docker:dind) service and mount the docker's socket. Also if you have "Permission denied" you
+so you need Docker-In-Docker (docker:dind) service and set the `DOCKER_HOST` environment variable. Also if you have "Permission denied" you
 need to run your container as root user:
 
 ```yml
-# to improve performance
-variables:
-  DOCKER_DRIVER: overlay2
-
 # we need DinD service
 services:
   - docker:dind
 
+variables:
+  # to improve performance
+  DOCKER_DRIVER: overlay2
+  # connect testcontainers to DinD service
+  DOCKER_HOST: "tcp://docker:2375"
+
 test:
- image: docker:latest
+ image: gradle:3.4
  stage: test
- script:
-   - >
-      docker run -t --rm 
-      -v /var/run/docker.sock:/var/run/docker.sock
-      -v "$(pwd)":"$(pwd)"
-      -w "$(pwd)"
-      -u 0:0
-      gradle:3.4 ./gradlew test
+ script: ./gradlew test
  only:
    - master
 ```
